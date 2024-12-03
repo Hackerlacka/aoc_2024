@@ -1,0 +1,8 @@
+[package]
+name = "aoc3"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aoc_helper = { version = "0.1.0", path = "../aoc_helper" }
+regex = "1.11.1"
