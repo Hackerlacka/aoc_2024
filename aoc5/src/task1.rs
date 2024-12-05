@@ -6,6 +6,8 @@ mod tests {
 
     #[test]
     fn test_example_input_1() {
+        env_logger::init();
+
         let file = "../input/5_1_example_input_1.txt";
         let res = run_task_with_file(file);
         assert_eq!(res, 143);

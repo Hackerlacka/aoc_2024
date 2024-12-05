@@ -16,9 +16,7 @@ fn run_task_with_file(file: &str) -> i64 {
     let printer = Printer::new(file);
     let incorrect_updates = printer.find_incorrect_updates();
     let corrected_updates = printer.correct_incorrect_updates(incorrect_updates);
-    // This is silly...
-    let tmp = corrected_updates.iter().map(|update| update).collect();
-    Printer::sum_middle_pages(tmp)
+    Printer::sum_middle_pages(corrected_updates.iter().collect())
 }
 
 pub fn run_task() {

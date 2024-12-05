@@ -1,3 +1,5 @@
+use log::debug;
+
 #[derive(Debug)]
 pub struct OrderingRule {
     x: i64,
@@ -31,7 +33,7 @@ impl Update {
     }
 
     fn is_correct(self: &Self, ordering_rules: &Vec<OrderingRule>) -> bool {
-        //dbg!("Testing: {self:?}");
+        debug!("Testing: {self:?}");
         for page in self.pages.iter() {
             for ordering_rule in ordering_rules.iter() {
                 if *page == ordering_rule.x {
@@ -40,21 +42,17 @@ impl Update {
                     if y_pos.is_none() {
                         continue;
                     }
-                    //dbg!("page: {page}, ordering_rule: {ordering_rule:?}, x_pos: {x_pos} y_pos: {}",y_pos.unwrap());
+                    debug!("page: {page}, ordering_rule: {ordering_rule:?}, x_pos: {x_pos} y_pos: {}",y_pos.unwrap());
                     if y_pos.unwrap() < x_pos {
-                        //dbg!("Failing: {self:?}");
+                        debug!("Failing: {self:?}");
                         return false;
                     }
                 }
             }
         }
 
-        //dbg!("Successful: {self:?}");
+        debug!("Successful: {self:?}");
         return true;
-    }
-
-    fn reevaluate_y(self: &mut Self, ordering_rules: &Vec<OrderingRule>, page_y: i64) {
-        // TODO: Must be recursive??
     }
 
     fn do_move(self: &mut Self, ordering_rule: &OrderingRule) -> bool {
@@ -71,30 +69,24 @@ impl Update {
     }
 
     fn do_correct(self: &mut Self, ordering_rules: &Vec<OrderingRule>) {
-        // Loop through pages (index to avoid reference issues)
-        // Loop through ordering rules and apply them one by one (inserting them just before)
-            // If they are already in front, do nothing!
-            // If one is moved, it must check all ordering rules that is was a part of (as y) and re-evaluate them
-
-        for i in 0..self.pages.len() {
-            let page = *self.pages.get(i).unwrap();
-            for j in 0..ordering_rules.len() {
-                let ordering_rule = ordering_rules.get(j).unwrap();
-                if ordering_rule.x != page || !self.pages.contains(&ordering_rule.y) {
-                    continue; 
-                }
-
-                if self.do_move(ordering_rule) {
-                    // TODO: reevaluate
+        'outer: loop {
+            for i in 0..self.pages.len() {
+                let page = *self.pages.get(i).unwrap();
+                for j in 0..ordering_rules.len() {
+                    // Apply each ordering rule one by one if they apply to the printer update pages
+                    let ordering_rule = ordering_rules.get(j).unwrap();
+                    if ordering_rule.x != page || !self.pages.contains(&ordering_rule.y) {
+                        continue; 
+                    }
+                    
+                    if self.do_move(ordering_rule) {
+                        // If a move was performed restart everything ("efficient" :D)
+                        continue 'outer;
+                    }
                 }
             }
+            break;  
         }
-
-        // cdba
-        // a|b
-        // b|c
-        // cdab
-        // bcda!!!!
     }
 }
 
