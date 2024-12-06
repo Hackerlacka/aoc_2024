@@ -1,5 +1,6 @@
 use std::{collections::HashSet, ops};
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum Direction {
     UP,
     RIGHT,
@@ -7,8 +8,7 @@ enum Direction {
     LEFT
 }
 
-// TODO: Might need to implement the hash manually...
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct Position {
     y: i64,
     x: i64
@@ -64,7 +64,7 @@ impl Position {
 
 impl ops::Add<Position> for Position {
     type Output = Position;
-    
+
     fn add(self, _rhs: Position) -> Position {
         Position { y: self.y + _rhs.y, x: self.x + _rhs.x }
     }
@@ -78,7 +78,7 @@ impl Guard {
     fn do_move(self: &mut Self, area_bounds: &Position, obstacles: &HashSet<Position>) -> bool {
         let dpos = self.direction.get_as_pos();
         let new_pos = self.pos + dpos;
-        
+
         if GuardedArea::is_out_of_bounds(area_bounds, &new_pos) {
             return false;
         } else if GuardedArea::is_obstacle(obstacles, &new_pos) {
@@ -94,7 +94,7 @@ impl Guard {
 impl GuardedArea {
     pub fn new(file: &str) -> GuardedArea {
         let lines = aoc_helper::read_lines(file);
-        let area_bounds = Position::new(lines.len() as i64, lines.iter().last().unwrap().len() as i64); 
+        let area_bounds = Position::new(lines.len() as i64, lines.iter().last().unwrap().len() as i64);
         let mut guard = None;
         let mut obstacles = HashSet::new();
 
@@ -131,5 +131,67 @@ impl GuardedArea {
                 return unique_positions.len() as u64;
             }
         }
+    }
+
+    fn is_loop(&mut self) -> bool {
+        let guard_pos = self.guard.pos.clone();
+        let guard_dir = self.guard.direction.clone();
+        let retval: bool;
+        let mut unique_positions = HashSet::new();
+
+        //println!("Obstacles: {:?}", self.obstacles);
+
+        loop {
+            // Guard moves
+            if self.guard.do_move(&self.area_bounds, &self.obstacles) {
+                let pos_and_dir = (self.guard.pos.clone(), self.guard.direction.clone());
+                if unique_positions.contains(&pos_and_dir) {
+                    // We found a loop!
+                    retval = true;
+                    break;
+                }
+                //println!("Inserting {pos_and_dir:?}");
+                unique_positions.insert(pos_and_dir);
+            } else {
+                // Next position would have been out of bounds
+                retval = false;
+                break;
+            }
+        }
+
+        //println!("");
+
+        // Reset guard pos and dir
+        self.guard.pos = guard_pos;
+        self.guard.direction = guard_dir;
+        return retval;
+    }
+
+    pub fn find_all_loops(self: &mut Self) -> u64 {
+        // Loop through all possible positions and place obstacles
+        let mut loops = 0;
+        //let tot = self.area_bounds.y * self.area_bounds.x;
+        //let mut n = 0;
+
+        for y in 0..self.area_bounds.y {
+            for x in 0..self.area_bounds.x {
+                //n += 1;
+                //println!("{n}/{tot}");
+
+                let pos = Position::new(y, x);
+                if Self::is_obstacle(&self.obstacles, &pos) || self.guard.pos == pos {
+                    continue;
+                }
+                self.obstacles.insert(pos);
+
+                // Check for loop and increase counter
+                if self.is_loop() {
+                    loops += 1;
+                }
+                self.obstacles.remove(&pos);
+            }
+        }
+
+        return loops;
     }
 }

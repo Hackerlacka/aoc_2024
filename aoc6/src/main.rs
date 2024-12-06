@@ -5,6 +5,6 @@ mod utils;
 fn main() {
     //env_logger::init();
 
-    task1::run_task();
-    task2::run_task();
+    aoc_helper::benchmark(task1::run_task);
+    aoc_helper::benchmark(task2::run_task);
 }
